@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billie Eilish Lyrics Player</title>
+    <style>
+        /* GLOBAL STYLES */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e8f4f8;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .profile-container {
+            margin-bottom: 20px;
+            padding: 20px;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #2a7ab0;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+        
+        .profile-pic.spin {
+            animation: spin 20s linear infinite;
+            animation-play-state: running;
+        }
+        
+        .profile-pic.paused {
+            animation-play-state: paused;
+        }
+        
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+        
+        h1 {
+            color: #2a7ab0;
+            margin-bottom: 5px;
+            margin-top: 15px;
+        }
+        
+        h2 {
+            color: #1c5a85;
+            margin-top: 0;
+            font-weight: normal;
+        }
+        
+        .player-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        audio {
+            width: 100%;
+            margin-bottom: 20px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            height: 0;
+            opacity: 0;
+            position: absolute;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        button {
+            background-color: #2a7ab0;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button:hover {
+            background-color: #1c5a85;
+        }
+        
+        .lyrics-container {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            height: 300px;
+            overflow-y: auto;
+            text-align: center;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .lyrics-line {
+            margin: 15px 0;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .lyrics-line.active {
+            color: #2a7ab0;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 5px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 15px 0;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #2a7ab0;
+            border-radius: 5px;
+            width: 0%;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* HAMBURGER MENU STYLES */
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            background: #2a7ab0;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        
+        .menu-toggle span {
+            display: block;
+            width: 20px;
+            height: 2px;
+            background: white;
+            margin: 2px 0;
+            transition: all 0.3s;
+        }
+        
+        .menu {
+            position: fixed;
+            top: 0;
+            right: -250px;
+            width: 250px;
+            height: 100%;
+            background: white;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+            z-index: 99;
+            transition: right 0.3s;
+            padding-top: 70px;
+            overflow-y: auto;
+        }
+        
+        .menu.active {
+            right: 0;
+        }
+        
+        .menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            transition: background 0.3s;
+        }
+        
+        .menu a:hover, .menu a.active {
+            background: #f0f8ff;
+            color: #2a7ab0;
+        }
+        
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 98;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+        
+        .menu-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hamburger Menu Button -->
+    <div class="menu-toggle" id="menuToggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <!-- Menu Content -->
+    <div class="menu" id="menu">
+        <a href="#watch" class="active">watch</a>
+        <a href="#wildflower">wildflower</a>
+        <a href="#thatgirl">that girl</a>
+        <a href="#birdsofafeather">birds of a feather</a>
+        <a href="#idontwannabeyouanymore">idontwannabeyou...</a>
+    </div>
+
+    <!-- Menu Overlay -->
+    <div class="menu-overlay" id="menuOverlay"></div>
+
+    <!-- Dynamic Content -->
+    <div id="app">
+        <!-- Konten akan dimuat di sini -->
+    </div>
+
+    <script>
+        // DATA SEMUA LAGU
+        const songs = {
+            watch: {
+                title: "watch",
+                artist: "Billie Eilish",
+                cover: "watch.png",
+                audio: "watch.mp3",
+                lyrics: `[00:00.88]Lips meet teeth and tongue
+[00:05.67]My heart skips eight beats at once
+[00:12.02]If we were meant to be
+[00:14.47]We would have been by now
+[00:18.02]See what you wanna see
+[00:19.87]But all I see is him right now
+
+[00:25.80]I'll sit and watch your car burn
+[00:30.17]With the fire that you started in me
+[00:33.14]But you never came back to ask it out
+[00:36.27]Go ahead and watch my heart burn
+[00:40.27]With the fire that you started in me
+[00:43.21]But I'll never let you back to put it out
+
+[00:50.39]Your love feels so fake
+[00:55.04]And my demands aren't high to make
+[01:01.62]If I could get to sleep
+[01:04.07]I would have slept by now
+[01:07.52]Your lies will never keep
+[01:09.53]I think you need to blow 'em out
+
+[01:15.24]I'll sit and watch your car burn
+[01:19.53]With the fire that you started in me
+[01:22.59]But you never came back to ask it out
+[01:25.79]Go ahead and watch my heart burn
+[01:29.99]With the fire that you started in me
+[01:32.66]But I'll never let you back to put it out
+
+[01:47.06]When you call my name
+[01:50.13]Do you think I'll come runnin'?
+[01:52.94]You never did the same
+[01:55.75]So good at givin' me nothin'
+[01:58.82]When you close your eyes, do you picture me?
+[02:01.97]When you fantasize, am I your fantasy?
+[02:05.18]Now you know
+[02:07.81]Now I'm free
+[02:10.74]I'll sit and watch your car burn
+[02:14.91]With the fire that you started in me
+[02:17.87]But you never came back to ask it out
+[02:21.96]Watch my heart burn
+[02:25.07]With the fire that you started in me
+[02:27.97]But I'll never let you back to put it out
+
+[02:36.73]Never let you back
+[02:42.10]Let you back, let you back
+[02:46.63]Never gonna let you back, let you back`
+            },
+            wildflower: {
+                title: "Wildflower",
+                artist: "Billie Eilish",
+                cover: "wildflower.png",
+                audio: "wildflower.mp3",
+                lyrics: `[00:00.49] ˚♬ ﾟ
+[00:15.16] Things fall apart and time breaks your heart
+[00:21.57] I wasn't there, but I know
+[00:28.01] She was your girl, you showed her the world
+[00:34.18] You fell out of love and you both let go
+[00:40.33] She was cryin' on my shoulder, all I could do was hold her
+[00:46.71] Only made us closer until July
+[00:53.47] Now I know that you love me, you don't need to remind me
+[00:59.86] I should put it all behind me, shouldn't I?
+[01:04.72] But I see her in the back of my mind
+[01:11.50] All the time
+[01:17.75] Like a fever, like I'm burning alive
+[01:24.31] Like a sign
+[01:32.67] Did I cross the line?
+[01:37.72] Mm, hm
+[01:42.02] ˚♬ ﾟ
+[01:48.97] Well, good things don't last (good things don't last)
+[01:52.28] And life moves so fast (life moves so fast)
+[01:55.50] I'd never ask who was better (I'd never ask who was better)
+[02:01.68] 'Cause she couldn't be (she couldn't be)
+[02:05.20] More different from me (more different)
+[02:08.53] Happy and free (happy and free) in leather
+[02:14.51] And I know that you love me (you love me)
+[02:18.01] You don't need to remind me (remind me)
+[02:20.88] Wanna put it all behind me, but baby
+[02:26.41] I see her in the back of my mind (back of my mind)
+[02:32.66] All the time (all the time)
+[02:38.95] Feels like a fever (like a fever)
+[02:42.06] Like I'm burning alive (burning alive)
+[02:45.66] Like a sign
+[02:53.68] Did I cross the line?
+[02:58.03] You say no one knows you so well (oh)
+[03:02.63] But every time you touch me, I just wonder how she felt
+[03:08.54] Valentine's Day, cryin' in the hotel
+[03:14.48] I know you didn't mean to hurt me, so I kept it to myself
+[03:21.13] And I wonder
+[03:24.41] Do you see her in the back of your mind?
+[03:31.13] In my eyes?
+[03:34.58] ˚♬ ﾟ
+[03:51.94] You say no one knows you so well
+[03:56.88] But every time you touch me, I just wonder how she felt
+[04:03.87] Valentine's Day, cryin' in the hotel
+[04:09.16] I know you didn't mean to hurt me, so I kept it to myself`
+            },
+            thatgirl: {
+                title: "That Girl",
+                artist: "Olly Murs",
+                cover: "olly.png",
+                audio: "that girl.mp3",
+                lyrics: `[00:00.19]There's a girl, but I let her get away
+[00:05.52]It's all my fault, 'cause pride got in the way
+[00:10.86]And I'd be lying if I said, I was okay
+[00:16.27]About that girl, the one I let get away
+[00:21.25]I keep saying no
+[00:23.76]This can't be the way it was supposed to be
+[00:26.50]I keep saying no
+[00:29.17]There's gotta be a way to get you close to me
+[00:32.23]Now I know, you gotta speak up if you want somebody
+[00:36.21]Can't let them get away, oh no
+[00:39.17]You don't wanna end up sorry
+[00:41.65]The way that I'm feeling every day
+[00:43.62](Don't you know?) No, no, no, no
+[00:47.00]There's no hope for the broken heart
+[00:48.15](Don't you know?) No, no, no, no
+[00:52.41]There's no hope for the broken
+[00:54.37]There's a girl, but I let her get away
+[00:59.61]It's my fault, 'cause I said I needed space
+[00:05.06]And I've been torturing myself night and day
+[00:10.38]About that girl, the one I let get away
+[00:15.19]I keep saying no
+[00:17.67]This can't be the way it was supposed to be
+[00:20.50]I keep saying no
+[00:22.93]There's gotta be a way to get you, gotta be a way to get you close to me
+[00:26.81]You gotta speak up if you want somebody
+[00:30.31]Can't let them get away, oh no
+[00:33.08]You don't wanna end up sorry
+[00:35.50]The way that I'm feeling every day
+[00:37.45](Don't you know?) No, no, no, no
+[00:40.95]There's no hope for the broken heart
+[00:42.85](Don't you know?) No, no, no, no
+[00:46.25]There's no hope for the broken
+[00:49.28]No hope for me (no)
+[00:51.82]No hope 'cause I'm broken
+[00:54.52]No room to breathe (no)
+[00:56.53]And I got no one to blame
+[00:59.98]No home for me (no)
+[01:02.63]No home 'cause I'm broken
+[01:04.50]About that girl, the one I let get away
+[01:09.13]So, you better speak up if you want somebody
+[01:13.33]You can't let them get away, oh no, no
+[01:16.28]You don't wanna end up sorry (oh, no)
+[01:18.87]The way that I'm feeling every day
+[01:20.55](Don't you know?) No, no, no, no
+[01:24.09]There's no home for the broken heart
+[01:25.83](Don't you know?) No, no, no, no
+[01:29.68]There's no home for the broken
+[01:31.47]Oh, you don't wanna lose that love
+[01:34.65]It's only gonna hurt too much
+[01:36.53](I'm telling you) you don't wanna lose that love
+[01:39.95]It's only gonna hurt too much
+[01:41.84](I'm telling you) you don't wanna lose that love
+[01:45.00]'Cause there's no home for the broken
+[01:47.56]About that girl, the one I let get away`
+            },
+            birdsofafeather: {
+                title: "birds of a feather",
+                artist: "Billie Eilish",
+                cover: "birds of a feather.png",
+                audio: "birds of a feather.mp3",
+                lyrics: `[00:00.30] (Without you, my baby)
+[00:03.67] I want you to stay
+[00:08.21] 'Til I'm in the grave
+[00:12.80] 'Til I rot away, dead and buried
+[00:17.37] 'Til I'm in the casket you carry
+[00:21.59] If you go, I'm going too, uh
+[00:26.58] 'Cause it was always you (alright)
+[00:30.83] And if I'm turning blue, please don't save me
+[00:35.62] Nothing left to lose without my baby
+[00:41.67] Birds of a feather, we should stick together, I know
+[00:46.27] I said I'd never think I wasn't better alone
+[00:50.94] Can't change the weather, might not be forever
+[00:54.66] But if it's forever, it's even better
+[00:59.92] And I don't know what I'm crying for
+[01:04.96] I don't think I could love you more
+[01:09.18] It might not be long, but baby, I
+[01:15.46] I'll love you 'til the day that I die
+[01:20.76] 'Til the day that I die
+[01:25.44] 'Til the light leaves my eyes
+[01:30.05] 'Til the day that I die
+[01:35.00] I want you to see, hm
+[01:39.78] How you look to me, hm
+[01:44.25] You wouldn't believe if I told ya
+[01:48.79] You would keep the compliments I throw ya
+[01:53.23] But you're so full of shit, uh
+[01:57.99] Tell me it's a bit, oh
+[02:02.51] Say you don't see it, your mind's polluted
+[02:07.06] Say you wanna quit, don't be stupid
+[02:12.96] And I don't know what I'm crying for
+[02:18.07] I don't think I could love you more
+[02:22.22] Might not be long, but baby, I
+[02:29.16] Don't wanna say goodbye
+[02:31.34] Birds of a feather, we should stick together, I know ('til the day that I die)
+[02:35.93] I said I'd never think I wasn't better alone ('til the light leaves my eyes)
+[02:40.44] Can't change the weather, might not be forever ('til the day that I die)
+[02:44.31] But if it's forever, it's even better
+[02:49.80] I knew you in another life
+[02:54.52] You had that same look in your eyes
+[02:59.52] I love you, don't act so surprised
+[03:03.24]୧🎤⍥⃝⃝ ˒˒
+[03:26.24]`
+            },
+            idontwannabeyouanymore: {
+                title: "idontwannabeyouanymore",
+                artist: "Billie Eilish",
+                cover: "idontwannabeyouanymore.png",
+                audio: "idontwannabeyouanymore.mp3",
+                lyrics: `[00:17.10]Don't be that way, fall apart twice a day
+[00:24.72]I just wish you could feel what you say
+[00:33.78]Show, never tell, but I know you too well
+[00:41.68]Got a mood that you wish you could sell
+[00:50.46]If teardrops could be bottled, there'd be swimming pools filled by models
+[00:58.63]Told, "A tight dress is what makes you a whore"
+[01:07.13]If "I love you" was a promise, would you break it, if you're honest?
+[01:15.54]Tell the mirror what you know she's heard before
+[01:24.67]I don't wanna be you anymore
+[01:41.75]Hands getting cold, losing feeling is getting old
+[01:49.59]Was I made from a broken mold?
+[01:58.78]Hurt, I can't shake, we've made every mistake
+[02:06.53]Only you know the way that I break
+[02:15.16]If teardrops could be bottled, there'd be swimming pools filled by models
+[02:23.40]Told, "A tight dress is what makes you a whore"
+[02:31.87]If "I love you" was a promise, would you break it, if you're honest?
+[02:40.38]Tell the mirror what you know she's heard before
+[02:48.81]I, I don't wanna be you
+[02:57.87]I don't wanna be you
+[03:06.30]I don't wanna be you anymore`
+            }
+        };
+
+        // Initialize Hamburger Menu
+        const menuToggle = document.getElementById('menuToggle');
+        const menu = document.getElementById('menu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        menuToggle.addEventListener('click', () => {
+            menu.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            menuToggle.classList.toggle('active');
+        });
+
+        menuOverlay.addEventListener('click', () => {
+            menu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            menuToggle.classList.remove('active');
+        });
+
+        // INITIALIZE PLAYER
+        function initPlayer(songId) {
+            const song = songs[songId];
+            if (!song) return;
+
+            const app = document.getElementById('app');
+            app.innerHTML = `
+                <div class="profile-container" id="profile-container">
+                    <img src="${song.cover}" alt="${song.artist}" class="profile-pic" id="profile-pic">
+                </div>
+                <h1>${song.title}</h1>
+                <h2>${song.artist}</h2>
+                <div class="player-container">
+                    <audio id="audio-player">
+                        <source src="${song.audio}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="controls">
+                        <button id="play-btn">Play</button>
+                        <button id="pause-btn">Pause</button>
+                    </div>
+                    <div class="progress-container" id="progress-container">
+                        <div class="progress-bar" id="progress-bar"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:00</span>
+                        <span id="total-time">0:00</span>
+                    </div>
+                </div>
+                <div class="lyrics-container" id="lyrics-container"></div>
+            `;
+
+            // Parse and display lyrics
+            const lyricsContainer = document.getElementById('lyrics-container');
+            const lyrics = parseLRC(song.lyrics);
+            lyrics.forEach(line => {
+                const div = document.createElement('div');
+                div.className = 'lyrics-line';
+                div.dataset.time = line.time;
+                div.textContent = line.text;
+                lyricsContainer.appendChild(div);
+            });
+
+            // Player functionality
+            const player = document.getElementById('audio-player');
+            const playBtn = document.getElementById('play-btn');
+            const pauseBtn = document.getElementById('pause-btn');
+            const progressBar = document.getElementById('progress-bar');
+            const progressContainer = document.getElementById('progress-container');
+            const currentTimeDisplay = document.getElementById('current-time');
+            const totalTimeDisplay = document.getElementById('total-time');
+            const profilePic = document.getElementById('profile-pic');
+            const profileContainer = document.getElementById('profile-container');
+            
+            let isSpinning = false;
+            
+            // Player controls
+            playBtn.addEventListener('click', () => {
+                player.play();
+                if (!isSpinning) {
+                    profilePic.classList.add('spin');
+                    isSpinning = true;
+                } else {
+                    profilePic.classList.remove('paused');
+                }
+            });
+            
+            pauseBtn.addEventListener('click', () => {
+                player.pause();
+                profilePic.classList.add('paused');
+            });
+            
+            // Progress bar
+            player.addEventListener('timeupdate', updateProgress);
+            player.addEventListener('loadedmetadata', updateTimeDisplay);
+            progressContainer.addEventListener('click', setProgress);
+            
+            // Profile picture spin control
+            profileContainer.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (e.target === profilePic || e.target === profileContainer) {
+                    if (!isSpinning) {
+                        profilePic.classList.add('spin');
+                        isSpinning = true;
+                    } else {
+                        profilePic.classList.toggle('paused');
+                    }
+                }
+            });
+            
+            profilePic.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+            }, { passive: false });
+            
+            // Helper functions
+            function parseLRC(lrcText) {
+                const lines = lrcText.split('\n');
+                const result = [];
+                for (const line of lines) {
+                    const match = line.match(/^\[(\d{2}):(\d{2})\.(\d{2})\](.*)/);
+                    if (match) {
+                        const minutes = parseFloat(match[1]);
+                        const seconds = parseFloat(match[2]);
+                        const hundredths = parseFloat(match[3]);
+                        const time = minutes * 60 + seconds + hundredths / 100;
+                        const text = match[4].trim();
+                        if (text) {
+                            result.push({ time, text });
+                        }
+                    }
+                }
+                return result;
+            }
+            
+            function updateProgress() {
+                const progressPercent = (player.currentTime / player.duration) * 100;
+                progressBar.style.width = `${progressPercent}%`;
+                updateTimeDisplay();
+                
+                // Highlight current lyric
+                const currentTime = player.currentTime;
+                let currentLineIndex = -1;
+                
+                for (let i = 0; i < lyrics.length; i++) {
+                    if (lyrics[i].time <= currentTime) {
+                        currentLineIndex = i;
+                    } else {
+                        break;
+                    }
+                }
+                
+                const lyricLines = document.querySelectorAll('.lyrics-line');
+                lyricLines.forEach((line, index) => {
+                    if (index === currentLineIndex) {
+                        line.classList.add('active');
+                        line.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        line.classList.remove('active');
+                    }
+                });
+            }
+            
+            function updateTimeDisplay() {
+                const minutes = Math.floor(player.currentTime / 60);
+                const seconds = Math.floor(player.currentTime % 60);
+                currentTimeDisplay.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                
+                const totalMinutes = Math.floor(player.duration / 60);
+                const totalSeconds = Math.floor(player.duration % 60);
+                if (!isNaN(player.duration)) {
+                    totalTimeDisplay.textContent = `${totalMinutes}:${totalSeconds < 10 ? '0' : ''}${totalSeconds}`;
+                }
+            }
+            
+            function setProgress(e) {
+                const width = this.clientWidth;
+                const clickX = e.offsetX;
+                const duration = player.duration;
+                player.currentTime = (clickX / width) * duration;
+            }
+        }
+
+        // ROUTER
+        window.addEventListener('hashchange', () => {
+            const songId = window.location.hash.substring(1);
+            initPlayer(songId);
+            updateNavActiveState(songId);
+            // Close menu when a song is selected
+            menu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            menuToggle.classList.remove('active');
+        });
+
+        function updateNavActiveState(songId) {
+            document.querySelectorAll('#menu a').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${songId}`) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // INITIAL LOAD
+        if (!window.location.hash) {
+            window.location.hash = 'watch';
+        } else {
+            initPlayer(window.location.hash.substring(1));
+            updateNavActiveState(window.location.hash.substring(1));
+        }
+    </script>
+</body>
+</html>
