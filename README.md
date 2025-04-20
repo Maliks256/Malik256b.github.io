@@ -1,1 +1,1 @@
-Malik256b.github.io
+Maliks256b.github.io
