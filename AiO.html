@@ -1,3 +1,67 @@
+let words = document.querySelectorAll('#row1 span'); 
+let i = 0;
+
+function typeWord() {
+    if (i >= words.length) return;
+
+    let word = words[i].innerText;
+    let input = document.getElementById('inputfield');
+
+    input.value = word;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', {'key':' '})); // simulate space
+    i++;
+
+    setTimeout(typeWord, 50); // ketik tiap 50ms, bisa kamu ubah lebih cepat atau lambat
+}
+
+typeWord();
+
+
+miaw
+
+
+
+
+
+
+let words = document.querySelectorAll('#row1 span'); 
+let i = 0;
+
+function typeWord() {
+    if (i >= words.length) return;
+
+    let word = words[i].innerText;
+    let input = document.getElementById('inputfield');
+
+    input.value = word;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', {'key':' '})); // simulate space
+    i++;
+
+    setTimeout(typeWord, 50); // ketik tiap 50ms, bisa kamu ubah lebih cepat atau lambat
+}
+
+typeWord(); let words = document.querySelectorAll('#row1 span'); 
+let i = 0;
+
+function typeWord() {
+    if (i >= words.length) return;
+
+    let word = words[i].innerText;
+    let input = document.getElementById('inputfield');
+
+    input.value = word;
+    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new KeyboardEvent('keydown', {'key':' '})); // simulate space
+    i++;
+
+    setTimeout(typeWord, 50); // ketik tiap 50ms, bisa kamu ubah lebih cepat atau lambat
+}
+
+typeWord();
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
